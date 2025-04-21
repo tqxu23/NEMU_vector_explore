@@ -19,6 +19,8 @@
 
 #include <isa.h>
 
+#include "count.h"
+
 #define OP_STR_SIZE 40
 
 typedef struct {
@@ -176,7 +178,7 @@ finish:
   *shift = __shift;
 }
 
-#define def_INSTR_raw(pattern, body) do { \
+#define def_INSTR_raw(pattern, body)  do { \
   uint64_t key, mask, shift; \
   pattern_decode(pattern, STRLEN(pattern), &key, &mask, &shift); \
   if ((((uint64_t)get_instr(s) >> shift) & mask) == key) { body; } \
@@ -185,9 +187,13 @@ finish:
 #define def_INSTR_IDTABW(pattern, id, tab, width) \
   def_INSTR_raw(pattern, { concat(decode_, id)(s, width); return concat(table_, tab)(s); })
 
+  #define def_INSTR_IDTABW_COUNT(pattern, id, tab, width) \
+  def_INSTR_raw(pattern, { concat(decode_, id)(s, width); concat(count_, tab)(); return concat(table_, tab)(s); })
+
 #define def_INSTR_IDTAB(pattern, id, tab)   def_INSTR_IDTABW(pattern, id, tab, 0)
 #define def_INSTR_TABW(pattern, tab, width) def_INSTR_IDTABW(pattern, empty, tab, width)
 #define def_INSTR_TAB(pattern, tab)         def_INSTR_IDTABW(pattern, empty, tab, 0)
+#define def_INSTR_TAB_COUNT(pattern, tab)  def_INSTR_IDTABW_COUNT(pattern, empty, tab, 0)
 
 #define print_Dop(...) IFDEF(CONFIG_DEBUG, snprintf(__VA_ARGS__))
 #define print_asm(...) IFDEF(CONFIG_DEBUG, snprintf(log_asmbuf, sizeof(log_asmbuf), __VA_ARGS__))
