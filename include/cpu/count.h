@@ -10,7 +10,8 @@
         cnt_##name += 1;                 \
         flush_result();                  \
     }
-#define PRINT_COUNT(fp, name) if(cnt_##name>0){fprintf(fp, #name ", %d,\n", cnt_##name);}
+// #define PRINT_COUNT(fp, name) if(cnt_##name>0){fprintf(fp, #name ", %d,\n", cnt_##name);}
+#define PRINT_COUNT(fp, name) fprintf(fp, #name ", %d,\n", cnt_##name);
 
 // 1. vector int Add/sub 2. vector logical 3. vector fp add/sub 4. vector fp mul 5. vector fp fma 6. vector int mul 7. vector int madd 8. gather 9. compress 10. reduction 11. vector load/store address mode 12.vset 13. slide 14. cross domain (int -> vector/fp -> vector) move 15. vector int div 16. int div 17. vector div/sqrt 18. vector fp div/sqrt 19. mask 20. Vecor fp convert
 // DECLARE_COUNTERS
@@ -226,9 +227,50 @@
     DECLARE_STATIC_COUNTER(vopmvx);
     DECLARE_STATIC_COUNTER(vsetvl_dispatch); 
 
+    DECLARE_STATIC_COUNTER(vle);     
+    DECLARE_STATIC_COUNTER(vleff);   
+    DECLARE_STATIC_COUNTER(vlr);     
+    // DECLARE_STATIC_COUNTER(vlr);     
+    // DECLARE_STATIC_COUNTER(vlr);     
+    // DECLARE_STATIC_COUNTER(vlr);     
+    DECLARE_STATIC_COUNTER(vlm);     
+    DECLARE_STATIC_COUNTER(vlxe);    
+    DECLARE_STATIC_COUNTER(vlse);    
+    // DECLARE_STATIC_COUNTER(vlxe);    
+    DECLARE_STATIC_COUNTER(vse);     
+    DECLARE_STATIC_COUNTER(vsr);     
+    // DECLARE_STATIC_COUNTER(vsr);     
+    // DECLARE_STATIC_COUNTER(vsr);     
+    // DECLARE_STATIC_COUNTER(vsr);     
+    DECLARE_STATIC_COUNTER(vsm);     
+    DECLARE_STATIC_COUNTER(vsxe);    
+    DECLARE_STATIC_COUNTER(vsse);    
+    // DECLARE_STATIC_COUNTER(vsxe);    
+    DECLARE_STATIC_COUNTER(vle_mmu); 
+    DECLARE_STATIC_COUNTER(vleff_mmu)
+    // DECLARE_STATIC_COUNTER(vle_mmu); 
+    DECLARE_STATIC_COUNTER(vlr_mmu); 
+    // DECLARE_STATIC_COUNTER(vlr_mmu); 
+    // DECLARE_STATIC_COUNTER(vlr_mmu); 
+    // DECLARE_STATIC_COUNTER(vlr_mmu); 
+    DECLARE_STATIC_COUNTER(vlm_mmu); 
+    DECLARE_STATIC_COUNTER(vlxe_mmu);
+    DECLARE_STATIC_COUNTER(vlse_mmu);
+    // DECLARE_STATIC_COUNTER(vlxe_mmu);
+    DECLARE_STATIC_COUNTER(vse_mmu); 
+    DECLARE_STATIC_COUNTER(vsr_mmu); 
+    // DECLARE_STATIC_COUNTER(vsr_mmu); 
+    // DECLARE_STATIC_COUNTER(vsr_mmu); 
+    // DECLARE_STATIC_COUNTER( vsr_mmu);
+    DECLARE_STATIC_COUNTER(vsm_mmu); 
+    DECLARE_STATIC_COUNTER(vsxe_mmu);
+    DECLARE_STATIC_COUNTER(vsse_mmu);
+    // DECLARE_STATIC_COUNTER(vsxe_mmu);
+
+
 
 static inline int flush_result(){
-    FILE *fp = fopen("count.csv", "w");  // "w" 模式会清空原内容
+    FILE *fp = fopen("/nfs/home/xutongqiao/vector/xs-env/NEMU/count.csv", "w");  // "w" 模式会清空原内容
 
     if (fp == NULL) {
         perror("打开文件失败");
@@ -445,8 +487,30 @@ static inline int flush_result(){
         PRINT_COUNT(fp, vopivx);
         PRINT_COUNT(fp, vopfvf);
         PRINT_COUNT(fp, vopmvx);
-        PRINT_COUNT(fp, vsetvl_dispatch);      
-    
+        PRINT_COUNT(fp, vsetvl_dispatch);   
+           
+        PRINT_COUNT(fp, vle);     
+        PRINT_COUNT(fp, vleff);   
+        PRINT_COUNT(fp, vlr);      
+        PRINT_COUNT(fp, vlm);     
+        PRINT_COUNT(fp, vlxe);    
+        PRINT_COUNT(fp, vlse);     
+        PRINT_COUNT(fp, vse);     
+        PRINT_COUNT(fp, vsr);       
+        PRINT_COUNT(fp, vsm);     
+        PRINT_COUNT(fp, vsxe);    
+        PRINT_COUNT(fp, vsse);      
+        PRINT_COUNT(fp, vle_mmu); 
+        PRINT_COUNT(fp, vleff_mmu)
+        PRINT_COUNT(fp, vlr_mmu); 
+        PRINT_COUNT(fp, vlm_mmu); 
+        PRINT_COUNT(fp, vlxe_mmu);
+        PRINT_COUNT(fp, vlse_mmu);
+        PRINT_COUNT(fp, vse_mmu); 
+        PRINT_COUNT(fp, vsr_mmu); 
+        PRINT_COUNT(fp, vsm_mmu); 
+        PRINT_COUNT(fp, vsxe_mmu);
+        PRINT_COUNT(fp, vsse_mmu);
     fclose(fp);
     return 0;
 }
@@ -664,5 +728,26 @@ static inline int flush_result(){
     COUNTER_FUNC(vopmvx);
     COUNTER_FUNC(vsetvl_dispatch); 
 
-
+    COUNTER_FUNC(vle);     
+    COUNTER_FUNC(vleff);   
+    COUNTER_FUNC(vlr);      
+    COUNTER_FUNC(vlm);     
+    COUNTER_FUNC(vlxe);    
+    COUNTER_FUNC(vlse);     
+    COUNTER_FUNC(vse);     
+    COUNTER_FUNC(vsr);       
+    COUNTER_FUNC(vsm);     
+    COUNTER_FUNC(vsxe);    
+    COUNTER_FUNC(vsse);      
+    COUNTER_FUNC(vle_mmu); 
+    COUNTER_FUNC(vleff_mmu)
+    COUNTER_FUNC(vlr_mmu); 
+    COUNTER_FUNC(vlm_mmu); 
+    COUNTER_FUNC(vlxe_mmu);
+    COUNTER_FUNC(vlse_mmu);
+    COUNTER_FUNC(vse_mmu); 
+    COUNTER_FUNC(vsr_mmu); 
+    COUNTER_FUNC(vsm_mmu); 
+    COUNTER_FUNC(vsxe_mmu);
+    COUNTER_FUNC(vsse_mmu);
 #endif
