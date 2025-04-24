@@ -5,6 +5,12 @@
 
 
 #define DECLARE_STATIC_COUNTER(name) static int cnt_##name = 0;
+// #define COUNTER_FUNC(name)          
+//     static inline void count_##name(uint32_t vtype) {         
+//         cnt_##name += 1;                 
+//         printf("vtype: %d", vtype); 
+//         flush_result();                  
+//     }
 #define COUNTER_FUNC(name)          \
     static inline void count_##name() {         \
         cnt_##name += 1;                 \

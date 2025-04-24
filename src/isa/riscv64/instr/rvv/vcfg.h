@@ -15,7 +15,7 @@
 
 #include <common.h>
 
-#ifdef CONFIG_RVV
+// #ifdef CONFIG_RVV
 
 #include "cpu/exec.h"
 #include "../local-include/vreg.h"
@@ -91,4 +91,4 @@ def_EHelper(vsetivli) {
   vp_set_dirty();
 }
 
-#endif // CONFIG_RVV
+// #endif // CONFIG_RVV
