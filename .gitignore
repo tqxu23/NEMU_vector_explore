@@ -15,6 +15,7 @@
 !scripts/checkpoint_example/*
 include/config
 include/generated
+!vector_scripts
 build
 .vscode
 .idea
