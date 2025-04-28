@@ -187,17 +187,18 @@ finish:
 #define def_INSTR_IDTABW(pattern, id, tab, width) \
   def_INSTR_raw(pattern, { concat(decode_, id)(s, width); return concat(table_, tab)(s); })
 
-// #define def_INSTR_IDTABW_COUNT(pattern, id, tab, width, vtype) 
-// def_INSTR_raw(pattern, { concat(decode_, id)(s, width); concat(count_, tab)(vtype); return concat(table_, tab)(s); })
+#define def_INSTR_IDTABW_COUNT(pattern, id, tab, width, vsew, vlmul) \
+def_INSTR_raw(pattern, { concat(decode_, id)(s, width); concat(count_, tab)(vsew, vlmul); return concat(table_, tab)(s); })
 
-#define def_INSTR_IDTABW_COUNT(pattern, id, tab, width) \
-def_INSTR_raw(pattern, { concat(decode_, id)(s, width); concat(count_, tab)(); return concat(table_, tab)(s); })
+#define def_INSTR_IDTABW_COUNT_LS(pattern, id, tab, width, vsew, vlmul) \
+def_INSTR_raw(pattern, { concat(decode_, id)(s, width); concat(count_ls_, tab)(get_instr(s), vsew, vlmul); return concat(table_, tab)(s); })
 
 #define def_INSTR_IDTAB(pattern, id, tab)   def_INSTR_IDTABW(pattern, id, tab, 0)
 #define def_INSTR_TABW(pattern, tab, width) def_INSTR_IDTABW(pattern, empty, tab, width)
 #define def_INSTR_TAB(pattern, tab)         def_INSTR_IDTABW(pattern, empty, tab, 0)
-#define def_INSTR_TAB_COUNT(pattern, tab)  def_INSTR_IDTABW_COUNT(pattern, empty, tab, 0)
-// #define def_INSTR_TAB_COUNT(pattern, tab, vtype)  def_INSTR_IDTABW_COUNT(pattern, empty, tab, 0, vtype)
+// #define def_INSTR_TAB_COUNT(pattern, tab)  def_INSTR_IDTABW_COUNT(pattern, empty, tab, 0)
+#define def_INSTR_TAB_COUNT(pattern, tab, vsew, vlmul)  def_INSTR_IDTABW_COUNT(pattern, empty, tab, 0, vsew, vlmul)
+#define def_INSTR_TAB_COUNT_LS(pattern, tab, vsew, vlmul)  def_INSTR_IDTABW_COUNT_LS(pattern, empty, tab, 0, vsew, vlmul)
 
 #define print_Dop(...) IFDEF(CONFIG_DEBUG, snprintf(__VA_ARGS__))
 #define print_asm(...) IFDEF(CONFIG_DEBUG, snprintf(log_asmbuf, sizeof(log_asmbuf), __VA_ARGS__))

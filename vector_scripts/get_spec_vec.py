@@ -2,10 +2,13 @@ import os
 import json
 import csv
 from collections import defaultdict
-
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 # === 输入路径 ===
 json_file_path = '/nfs/home/xutongqiao/vector/xs-env/NEMU/cluster-0-0.json'
-csv_dir = '/nfs/home/xutongqiao/vector/xs-env/NEMU/vec_count_results'
+csv_dir = '/nfs/home/xutongqiao/vector/xs-env/NEMU_vector_explore/test04271037'
 
 # === 类别映射表 ===
 category_map = {
@@ -159,8 +162,8 @@ category_map = {
     'vwmacc': 'int_madd',
     'vwmaccus': 'int_madd',
     'vwmaccsu': 'int_madd',
-    'vslide1up': 'slide',
-    'vslide1down': 'slide',
+    'vslide1up': 'slide1',
+    'vslide1down': 'slide1',
     'vfadd': 'fp_arith',
     'vfredusum': 'reduction',
     'vfsub': 'fp_arith',
@@ -197,8 +200,8 @@ category_map = {
     'vfwnmacc': 'fp_madd',
     'vfwmsac': 'fp_madd',
     'vfwnmsac': 'fp_madd',
-    'vfslide1up': 'slide',
-    'vfslide1down': 'slide',
+    'vfslide1up': 'slide1',
+    'vfslide1down': 'slide1',
     'vfmerge': 'merge',
     'vmfgt': 'fp_arith',
     'vmfge': 'fp_arith',
@@ -221,84 +224,56 @@ category_map = {
     'vopmvx': 'category',
     'vsetvl_dispatch': 'category', 
 
-    'vle': 'vload',   
-    'vleff': 'vload',
-    'vlr': 'vload',
-    'vlr': 'vload',
-    'vlr': 'vload',
-    'vlr': 'vload',
-    'vlm': 'vload',
-    'vlxe': 'vload',
-    'vlse': 'vload',
-    'vlxe': 'vload',
-    'vse': 'vstore',
-    'vsr': 'vstore',
-    'vsm': 'vstore',
-    'vsxe': 'vstore',
-    'vsse': 'vstore',
-    'vle_mmu': 'vload',
-    'vleff_mmu': 'vload',
-    'vle_mmu': 'vload',
-    'vlr_mmu': 'vload',
-    'vlm_mmu': 'vload',
-    'vlxe_mmu': 'vload',
-    'vlse_mmu': 'vload',
-    'vse_mmu': 'vstore',
-    'vsr_mmu': 'vstore',
-    'vsm_mmu': 'vstore',
-    'vsxe_mmu': 'vstore',
-    'vsse_mmu': 'vstore',
+    'vle': 'vload-unit-stride',   
+    'vleff': 'vload-unit-stride',
+    'vlr': 'vload-whole',
+    'vlm': 'vload-mask',
+    'vlxe': 'vload-index',
+    'vlse': 'vload-strided',
+    'vse': 'vstore-unit-stride',
+    'vsr': 'vstore-whole',
+    'vsm': 'vstore-mask',
+    'vsxe': 'vstore-index',
+    'vsse': 'vstore-strided',
+    
+    'vle_mmu': 'vload-unit-stride',
+    'vleff_mmu': 'vload-unit-stride',
+    'vlr_mmu': 'vload-whole',
+    'vlm_mmu': 'vload-mask',
+    'vlxe_mmu': 'vload-index',
+    'vlse_mmu': 'vload-strided',
+    'vse_mmu': 'vstore-unit-stride',
+    'vsr_mmu': 'vstore-whole',
+    'vsm_mmu': 'vstore-mask',
+    'vsxe_mmu': 'vstore-index',
+    'vsse_mmu': 'vstore-strided',
 }
 
 # === 按指令分类的汇总函数 ===
-def summarize_by_category(instr_counts, category_map):
-    category_totals = {'cross_domain_move': 0,
-                    'config': 0,
-                    'int_extension': 0,
-                    'logical': 0,
-                    'config': 0,
-                    'mask': 0,
-                    'fp_convert': 0,
-                    'fp_sqrt': 0,
-                    'fp_div': 0,
-                    'classify': 0,
-                    'int_arith': 0,
-                    'gather': 0,
-                    'merge': 0,
-                    'int_mul': 0,
-                    'int_madd': 0,
-                    'compress': 0,
-                    'shift': 0,
-                    'narrow': 0,
-                    'reduction': 0,
-                    'dot': 0,
-                    'slide': 0,
-                    'fp_arith': 0,
-                    'fp_mul': 0,
-                    'fp_madd': 0,
-                    'sign_injection': 0,
-                    'int_sqrt': 0,
-                    'int_div': 0,
-                    'vset': 0,
-                    'category': 0,
-                    'vload': 0,
-                    'vstore': 0,
-                    }
-
-    for instr, count in instr_counts.items():
+def summarize_by_category(instr_counts, category_map, category_lists):
+    category_totals = []
+    for i in range(len(category_lists)):
+        category_totals.append(np.zeros((8, 8, 9), dtype=float))
+    for (instr, vsew, vlmul, segment), count in instr_counts.items():
         category = category_map.get(instr, 'other')
-        category_totals[category] += count
-
+        category_totals[category_lists.index(category)][int(vsew)][int(vlmul)][int(segment)+1] += count
+        
     return category_totals
 
-# === 主处理 ===
-benchmark_category_table = defaultdict(lambda: defaultdict(float))
-coverage_list = defaultdict(float)
+category_lists = []
+for key, value in category_map.items():
+    if value not in category_lists:
+        category_lists.append(value)
+category_lists.append("other")
 
+# === 主处理 ===
+coverage_list = defaultdict(float)
+total_list = []
 with open(json_file_path, 'r') as f:
     json_data = json.load(f)
-
+benchmark_lists = []
 for benchmark_name, data in json_data.items():
+    benchmark_lists.append(benchmark_name)
     coverage = 0
     if "points" not in data:
         continue
@@ -317,34 +292,75 @@ for benchmark_name, data in json_data.items():
                 for row in reader:
                     if len(row) >= 2:
                         instr = row[0].strip()
+                        # category_key = (row[1].strip(), row[2].strip(), row[3].strip())  # 使用 row[1], row[2], row[3] 作为新的分类标准
                         try:
-                            count = int(row[1].strip())
-                            instr_counts[instr] += count * current_coverage
+                            count = int(row[4].strip())
+                            instr_counts[(instr, row[1].strip(), row[2].strip(), row[3].strip())] += count * current_coverage
                         except ValueError:
                             continue
     
     coverage_list[benchmark_name] = coverage
     # 分类统计
-    category_totals = summarize_by_category(instr_counts, category_map)
-    for category, value in category_totals.items():
-        benchmark_category_table[category][benchmark_name] = value
+    category_totals = summarize_by_category(instr_counts, category_map, category_lists)
+    total_list.append(category_totals)
 
-# === 输出表格 ===
-all_categories = sorted(benchmark_category_table.keys())
-all_benchmarks = sorted(json_data.keys())
-print("Category," + ",".join(all_benchmarks)+",")
-print("Coverage," + ",".join(f"{coverage_list[b]:.2f}" for b in all_benchmarks) + ",")
-for category in all_categories:
-    if category=="category":
-        continue
-    row = [category]
-    for benchmark in all_benchmarks:
-        row.append(f"{benchmark_category_table[category].get(benchmark, 0):.2f}")
-    print(",".join(row)+",")
+a=np.array(total_list)
+a = a.reshape(55, -1)
+inst_2d_list = []
+inst_sew_list = []
+inst_sew_value = [8,16,32,64,-1,-2,-3,-4]
+inst_lmul_list = []
+inst_lmul_value = [1,2,4,8,-1,1/8,1/4,1/2]
+inst_seg_list = []
+inst_seg_value = [-1,0,1,2,3,4,5,6,7,8]
+for cate in category_lists:
+    for i in range(8):
+        for j in range(8):
+            for k in range(9):
+                inst_2d_list.append(f"{cate}")
+                inst_sew_list.append(inst_sew_value[i])
+                inst_lmul_list.append(inst_lmul_value[j])
+                inst_seg_list.append(inst_seg_value[k])
+index = pd.MultiIndex.from_product(
+    [benchmark_lists, inst_2d_list],
+    names=["benchmark", "inst_cate"]
+)
 
-# === 添加总计行 ===
-total_per_benchmark = []
-for benchmark in all_benchmarks:
-    total = sum(benchmark_category_table[cat].get(benchmark, 0) for cat in all_categories if cat != "category")
-    total_per_benchmark.append(f"{total:.2f}")
-print("Total," + ",".join(total_per_benchmark) + ",")
+df = pd.DataFrame(a, columns=[inst_2d_list, inst_sew_list, inst_lmul_list, inst_seg_list], index=benchmark_lists)
+columns = pd.MultiIndex.from_arrays([inst_2d_list, inst_sew_list, inst_lmul_list, inst_seg_list], names=('cate', 'sew', 'lmul', 'seg'))
+
+df.columns = columns
+df = df.loc[:, ~(df == 0).all(axis=0)]
+df_sum = df.sum(level='cate', axis=1)
+print(df)
+df = df.transpose()
+df_sum = df_sum.transpose()
+df.to_excel("rvv_instruction_ratios.xlsx", index=True)
+df_sum.to_excel("rvv_instruction_ratios_sum.xlsx", index=True)
+print(coverage_list)
+# plt.figure(figsize=(12, 8))  # 可调整图形大小
+# sns.heatmap(df_sum, annot=True, cmap='coolwarm', cbar=True)
+# plt.title('Heatmap of DataFrame')
+# plt.show()
+# plt.savefig("./rvv_instruction_ratios.png", bbox_inches='tight')
+# plt.close()
+
+# # === 输出表格 ===
+# all_categories = sorted(benchmark_category_table.keys())
+# all_benchmarks = sorted(json_data.keys())
+# print("Category," + ",".join(all_benchmarks)+",")
+# print("Coverage," + ",".join(f"{coverage_list[b]:.2f}" for b in all_benchmarks) + ",")
+# for category in all_categories:
+#     if category=="category":
+#         continue
+#     row = [category]
+#     for benchmark in all_benchmarks:
+#         row.append(f"{benchmark_category_table[category].get(benchmark, 0):.2f}")
+#     print(",".join(row)+",")
+
+# # === 添加总计行 ===
+# total_per_benchmark = []
+# for benchmark in all_benchmarks:
+#     total = sum(benchmark_category_table[cat].get(benchmark, 0) for cat in all_categories if cat != "category")
+#     total_per_benchmark.append(f"{total:.2f}")
+# print("Total," + ",".join(total_per_benchmark) + ",")

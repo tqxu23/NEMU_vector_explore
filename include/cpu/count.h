@@ -1,281 +1,300 @@
 #ifndef __CPU_COUNT_H__
 #define __CPU_COUNT_H__
 
+#define MAX_VSEW 8
+#define MAX_LMUL 8
+#define MAX_NF 8
+
 #include <stdio.h>
 
+#define DECLARE_STATIC_COUNTER_EXTERN(name) extern int cnt_##name[MAX_VSEW][MAX_LMUL];
+#define DECLARE_STATIC_COUNTER_LS_EXTERN(name) extern int cnt_ls_##name[MAX_VSEW][MAX_LMUL][MAX_NF];
 
-#define DECLARE_STATIC_COUNTER(name) static int cnt_##name = 0;
-// #define COUNTER_FUNC(name)          
-//     static inline void count_##name(uint32_t vtype) {         
-//         cnt_##name += 1;                 
-//         printf("vtype: %d", vtype); 
-//         flush_result();                  
+// #define DECLARE_STATIC_COUNTER_LS_EXTERN(name) extern int cnt_##name[MAX_VSEW][MAX_LMUL];
+
+// printf("vlmul: %d ", vtype->vsew); 
+// printf("vsew: %d ", vtype->vlmul); 
+// #define COUNTER_FUNC(name) 
+//     static inline void count_##name(uint32_t vsew, uint32_t vlmul) { 
+//         cnt_##name[vlmul][vsew] += 1; 
+//         printf("vlmul: %d ", vlmul); 
+//         printf("vsew: %d ", vsew); 
 //     }
-#define COUNTER_FUNC(name)          \
-    static inline void count_##name() {         \
-        cnt_##name += 1;                 \
-        flush_result();                  \
+#define COUNTER_FUNC(name) \
+    static inline void count_##name(uint32_t vsew, uint32_t vlmul) { \
+        cnt_##name[vsew][vlmul] += 1; \
     }
+#define COUNTER_LS_FUNC(name) \
+static inline void count_ls_##name(uint64_t inst, uint32_t vsew, uint32_t vlmul) { \
+    cnt_ls_##name[vsew][vlmul][(uint32_t)(inst>>29)] += 1; \
+}
+
 // #define PRINT_COUNT(fp, name) if(cnt_##name>0){fprintf(fp, #name ", %d,\n", cnt_##name);}
-#define PRINT_COUNT(fp, name) fprintf(fp, #name ", %d,\n", cnt_##name);
+#define PRINT_COUNT(fp, name) \
+    for(int i=0;i<MAX_VSEW;i++){ \
+        for(int j =0;j<MAX_LMUL;j++){ \
+            if (cnt_##name[i][j] > 0){ \
+                fprintf(fp, #name ", %d, %d, -1, %d,\n", i, j, cnt_##name[i][j]); \
+            } \
+        } \
+    }
+
+#define PRINT_LS_COUNT(fp, name) \
+for(int i=0;i<MAX_VSEW;i++){ \
+    for(int j =0;j<MAX_LMUL;j++){ \
+        for(int k =0;k<MAX_NF;k++){ \
+            if (cnt_ls_##name[i][j][k] > 0){ \
+                fprintf(fp, #name ", %d, %d, %d, %d,\n", i, j, k, cnt_ls_##name[i][j][k]); \
+            } \
+        } \
+    } \
+}
 
 // 1. vector int Add/sub 2. vector logical 3. vector fp add/sub 4. vector fp mul 5. vector fp fma 6. vector int mul 7. vector int madd 8. gather 9. compress 10. reduction 11. vector load/store address mode 12.vset 13. slide 14. cross domain (int -> vector/fp -> vector) move 15. vector int div 16. int div 17. vector div/sqrt 18. vector fp div/sqrt 19. mask 20. Vecor fp convert
-// DECLARE_COUNTERS
-    DECLARE_STATIC_COUNTER(vmvxs);
-    DECLARE_STATIC_COUNTER(vpopc);
-    DECLARE_STATIC_COUNTER(vfirst);
-    DECLARE_STATIC_COUNTER(vmvsx);
-    DECLARE_STATIC_COUNTER(vzextvf8);
-    DECLARE_STATIC_COUNTER(vsextvf8);
-    DECLARE_STATIC_COUNTER(vzextvf4);
-    DECLARE_STATIC_COUNTER(vsextvf4);
-    DECLARE_STATIC_COUNTER(vzextvf2);
-    DECLARE_STATIC_COUNTER(vsextvf2);
-    DECLARE_STATIC_COUNTER(vbrev_v);
-    DECLARE_STATIC_COUNTER(vbrev8_v);
-    DECLARE_STATIC_COUNTER(vrev8_v);
-    DECLARE_STATIC_COUNTER(vclz_v);
-    DECLARE_STATIC_COUNTER(vcpop_v);
-    DECLARE_STATIC_COUNTER(vctz_v);
-    DECLARE_STATIC_COUNTER(vmsbf);
-    DECLARE_STATIC_COUNTER(vmsof);
-    DECLARE_STATIC_COUNTER(vmsif);
-    DECLARE_STATIC_COUNTER(viota);
-    DECLARE_STATIC_COUNTER(vid);
-    DECLARE_STATIC_COUNTER(vfmvfs);
-    DECLARE_STATIC_COUNTER(vfmvsf);
-    DECLARE_STATIC_COUNTER(vfcvt_xufv);
-    DECLARE_STATIC_COUNTER(vfcvt_xfv);
-    DECLARE_STATIC_COUNTER(vfcvt_fxuv);
-    DECLARE_STATIC_COUNTER(vfcvt_fxv);
-    DECLARE_STATIC_COUNTER(vfcvt_rtz_xufv);
-    DECLARE_STATIC_COUNTER(vfcvt_rtz_xfv);
-    DECLARE_STATIC_COUNTER(vfwcvt_xufv);
-    DECLARE_STATIC_COUNTER(vfwcvt_xfv);
-    DECLARE_STATIC_COUNTER(vfwcvt_fxuv);
-    DECLARE_STATIC_COUNTER(vfwcvt_fxv);
-    DECLARE_STATIC_COUNTER(vfwcvt_ffv);
-    DECLARE_STATIC_COUNTER(vfwcvt_rtz_xufv);
-    DECLARE_STATIC_COUNTER(vfwcvt_rtz_xfv);
-    DECLARE_STATIC_COUNTER(vfncvt_xufw);
-    DECLARE_STATIC_COUNTER(vfncvt_xfw);
-    DECLARE_STATIC_COUNTER(vfncvt_fxuw);
-    DECLARE_STATIC_COUNTER(vfncvt_fxw);
-    DECLARE_STATIC_COUNTER(vfncvt_ffw);
-    DECLARE_STATIC_COUNTER(vfncvt_rod_ffw);
-    DECLARE_STATIC_COUNTER(vfncvt_rtz_xufw);
-    DECLARE_STATIC_COUNTER(vfncvt_rtz_xfw);
-    DECLARE_STATIC_COUNTER(vfsqrt_v);
-    DECLARE_STATIC_COUNTER(vfrsqrt7_v);
-    DECLARE_STATIC_COUNTER(vfrec7_v);
-    DECLARE_STATIC_COUNTER(vfclass_v);
-    DECLARE_STATIC_COUNTER(vadd);
-    DECLARE_STATIC_COUNTER(vsub);
-    DECLARE_STATIC_COUNTER(vrsub);
-    DECLARE_STATIC_COUNTER(vminu);
-    DECLARE_STATIC_COUNTER(vmin);
-    DECLARE_STATIC_COUNTER(vmaxu);
-    DECLARE_STATIC_COUNTER(vmax);
-    DECLARE_STATIC_COUNTER(vand);
-    DECLARE_STATIC_COUNTER(vor);
-    DECLARE_STATIC_COUNTER(vxor);
-    DECLARE_STATIC_COUNTER(vrgather);
-    DECLARE_STATIC_COUNTER(vrgatherei16);
-    DECLARE_STATIC_COUNTER(vadc);
-    DECLARE_STATIC_COUNTER(vmadc);
-    DECLARE_STATIC_COUNTER(vsbc);
-    DECLARE_STATIC_COUNTER(vmsbc);
-    DECLARE_STATIC_COUNTER(vmerge);
-    DECLARE_STATIC_COUNTER(vmseq);
-    DECLARE_STATIC_COUNTER(vmsne);
-    DECLARE_STATIC_COUNTER(vmsltu);
-    DECLARE_STATIC_COUNTER(vmslt);
-    DECLARE_STATIC_COUNTER(vmsleu);
-    DECLARE_STATIC_COUNTER(vmsle);
-    DECLARE_STATIC_COUNTER(vmsgtu);
-    DECLARE_STATIC_COUNTER(vmsgt);
-    DECLARE_STATIC_COUNTER(vsaddu);
-    DECLARE_STATIC_COUNTER(vsadd);
-    DECLARE_STATIC_COUNTER(vssubu);
-    DECLARE_STATIC_COUNTER(vssub);
-    DECLARE_STATIC_COUNTER(vsll);
-    DECLARE_STATIC_COUNTER(vmvnr);
-    DECLARE_STATIC_COUNTER(vsmul);
-    DECLARE_STATIC_COUNTER(vsrl);
-    DECLARE_STATIC_COUNTER(vsra);
-    DECLARE_STATIC_COUNTER(vssra);
-    DECLARE_STATIC_COUNTER(vnsrl);
-    DECLARE_STATIC_COUNTER(vnsra);
-    DECLARE_STATIC_COUNTER(vnclipu);
-    DECLARE_STATIC_COUNTER(vnclip);
-    DECLARE_STATIC_COUNTER(vssrl);
-    DECLARE_STATIC_COUNTER(vwredsumu);
-    DECLARE_STATIC_COUNTER(vwredsum);
-    DECLARE_STATIC_COUNTER(vdotu);
-    DECLARE_STATIC_COUNTER(vdot);
-    DECLARE_STATIC_COUNTER(vwsmaccu);
-    DECLARE_STATIC_COUNTER(vwsmacc);
-    DECLARE_STATIC_COUNTER(vwsmaccsu);
-    DECLARE_STATIC_COUNTER(vwsmaccus);
-    DECLARE_STATIC_COUNTER(vandn);
-    DECLARE_STATIC_COUNTER(vrol);
-    DECLARE_STATIC_COUNTER(vror);
-    DECLARE_STATIC_COUNTER(vwsll);
-    DECLARE_STATIC_COUNTER(vslideup);
-    DECLARE_STATIC_COUNTER(vslidedown);
-    DECLARE_STATIC_COUNTER(vredsum);
-    DECLARE_STATIC_COUNTER(vredand);
-    DECLARE_STATIC_COUNTER(vredor);
-    DECLARE_STATIC_COUNTER(vredxor);
-    DECLARE_STATIC_COUNTER(vredminu);
-    DECLARE_STATIC_COUNTER(vredmin);
-    DECLARE_STATIC_COUNTER(vredmaxu);
-    DECLARE_STATIC_COUNTER(vredmax);
-    DECLARE_STATIC_COUNTER(vaaddu);
-    DECLARE_STATIC_COUNTER(vaadd);
-    DECLARE_STATIC_COUNTER(vasubu);
-    DECLARE_STATIC_COUNTER(vasub);
-    DECLARE_STATIC_COUNTER(vwxunary0_dispatch);
-    DECLARE_STATIC_COUNTER(vmunary0_dispatch);
-    DECLARE_STATIC_COUNTER(vcompress);
-    DECLARE_STATIC_COUNTER(vmandnot);
-    DECLARE_STATIC_COUNTER(vmand);
-    DECLARE_STATIC_COUNTER(vmor);
-    DECLARE_STATIC_COUNTER(vmxor);
-    DECLARE_STATIC_COUNTER(vmornot);
-    DECLARE_STATIC_COUNTER(vmnand);
-    DECLARE_STATIC_COUNTER(vmnor);
-    DECLARE_STATIC_COUNTER(vmxnor);
-    DECLARE_STATIC_COUNTER(vdivu);
-    DECLARE_STATIC_COUNTER(vdiv);
-    DECLARE_STATIC_COUNTER(vremu);
-    DECLARE_STATIC_COUNTER(vrem);
-    DECLARE_STATIC_COUNTER(vmulhu);
-    DECLARE_STATIC_COUNTER(vmul);
-    DECLARE_STATIC_COUNTER(vmulhsu);
-    DECLARE_STATIC_COUNTER(vmulh);
-    DECLARE_STATIC_COUNTER(vmadd);
-    DECLARE_STATIC_COUNTER(vnmsub);
-    DECLARE_STATIC_COUNTER(vmacc);
-    DECLARE_STATIC_COUNTER(vnmsac);
-    DECLARE_STATIC_COUNTER(vwaddu);
-    DECLARE_STATIC_COUNTER(vwadd);
-    DECLARE_STATIC_COUNTER(vwsubu);
-    DECLARE_STATIC_COUNTER(vwsub);
-    DECLARE_STATIC_COUNTER(vwaddu_w);
-    DECLARE_STATIC_COUNTER(vwadd_w);
-    DECLARE_STATIC_COUNTER(vwsubu_w);
-    DECLARE_STATIC_COUNTER(vwsub_w);
-    DECLARE_STATIC_COUNTER(vwmulu);
-    DECLARE_STATIC_COUNTER(vwmulsu);
-    DECLARE_STATIC_COUNTER(vwmul);
-    DECLARE_STATIC_COUNTER(vwmaccu);
-    DECLARE_STATIC_COUNTER(vwmacc);
-    DECLARE_STATIC_COUNTER(vwmaccus);
-    DECLARE_STATIC_COUNTER(vwmaccsu);
-    DECLARE_STATIC_COUNTER(vslide1up);
-    DECLARE_STATIC_COUNTER(vslide1down);
-    DECLARE_STATIC_COUNTER(vrxunary0_dispatch);
-    DECLARE_STATIC_COUNTER(vfadd);
-    DECLARE_STATIC_COUNTER(vfredusum);
-    DECLARE_STATIC_COUNTER(vfsub);
-    DECLARE_STATIC_COUNTER(vfredosum);
-    DECLARE_STATIC_COUNTER(vfmin);
-    DECLARE_STATIC_COUNTER(vfredmin);
-    DECLARE_STATIC_COUNTER(vfmax);
-    DECLARE_STATIC_COUNTER(vfredmax);
-    DECLARE_STATIC_COUNTER(vfsgnj);
-    DECLARE_STATIC_COUNTER(vfsgnjn);
-    DECLARE_STATIC_COUNTER(vfsgnjx);
-    DECLARE_STATIC_COUNTER(vwfunary0_dispatch);
-    DECLARE_STATIC_COUNTER(vmfeq);
-    DECLARE_STATIC_COUNTER(vmfle);
-    DECLARE_STATIC_COUNTER(vmflt);
-    DECLARE_STATIC_COUNTER(vmfne);
-    DECLARE_STATIC_COUNTER(vfdiv);
-    DECLARE_STATIC_COUNTER(vfmul);
-    DECLARE_STATIC_COUNTER(vfmadd);
-    DECLARE_STATIC_COUNTER(vfnmadd);
-    DECLARE_STATIC_COUNTER(vfmsub);
-    DECLARE_STATIC_COUNTER(vfnmsub);
-    DECLARE_STATIC_COUNTER(vfmacc);
-    DECLARE_STATIC_COUNTER(vfnmacc);
-    DECLARE_STATIC_COUNTER(vfmsac);
-    DECLARE_STATIC_COUNTER(vfnmsac);
-    DECLARE_STATIC_COUNTER(vfwadd);
-    DECLARE_STATIC_COUNTER(vfwredusum);
-    DECLARE_STATIC_COUNTER(vfwsub);
-    DECLARE_STATIC_COUNTER(vfwredosum);
-    DECLARE_STATIC_COUNTER(vfwadd_w);
-    DECLARE_STATIC_COUNTER(vfwsub_w);
-    DECLARE_STATIC_COUNTER(vfwmul);
-    DECLARE_STATIC_COUNTER(vfwmacc);
-    DECLARE_STATIC_COUNTER(vfwnmacc);
-    DECLARE_STATIC_COUNTER(vfwmsac);
-    DECLARE_STATIC_COUNTER(vfwnmsac);
-    DECLARE_STATIC_COUNTER(vfslide1up);
-    DECLARE_STATIC_COUNTER(vfslide1down);
-    DECLARE_STATIC_COUNTER(vrfunary0_dispatch);
-    DECLARE_STATIC_COUNTER(vfmerge);
-    DECLARE_STATIC_COUNTER(vmfgt);
-    DECLARE_STATIC_COUNTER(vmfge);
-    DECLARE_STATIC_COUNTER(vfrdiv);
-    DECLARE_STATIC_COUNTER(vfrsub);
-    DECLARE_STATIC_COUNTER(vsetvli);
-    DECLARE_STATIC_COUNTER(vsetivli);
-    DECLARE_STATIC_COUNTER(vsetvl);
-    DECLARE_STATIC_COUNTER(vopivv);
-    DECLARE_STATIC_COUNTER(vopfvv);
-    DECLARE_STATIC_COUNTER(vopmvv);
-    DECLARE_STATIC_COUNTER(vopivi);
-    DECLARE_STATIC_COUNTER(vopivx);
-    DECLARE_STATIC_COUNTER(vopfvf);
-    DECLARE_STATIC_COUNTER(vopmvx);
-    DECLARE_STATIC_COUNTER(vsetvl_dispatch); 
 
-    DECLARE_STATIC_COUNTER(vle);     
-    DECLARE_STATIC_COUNTER(vleff);   
-    DECLARE_STATIC_COUNTER(vlr);     
-    // DECLARE_STATIC_COUNTER(vlr);     
-    // DECLARE_STATIC_COUNTER(vlr);     
-    // DECLARE_STATIC_COUNTER(vlr);     
-    DECLARE_STATIC_COUNTER(vlm);     
-    DECLARE_STATIC_COUNTER(vlxe);    
-    DECLARE_STATIC_COUNTER(vlse);    
-    // DECLARE_STATIC_COUNTER(vlxe);    
-    DECLARE_STATIC_COUNTER(vse);     
-    DECLARE_STATIC_COUNTER(vsr);     
-    // DECLARE_STATIC_COUNTER(vsr);     
-    // DECLARE_STATIC_COUNTER(vsr);     
-    // DECLARE_STATIC_COUNTER(vsr);     
-    DECLARE_STATIC_COUNTER(vsm);     
-    DECLARE_STATIC_COUNTER(vsxe);    
-    DECLARE_STATIC_COUNTER(vsse);    
-    // DECLARE_STATIC_COUNTER(vsxe);    
-    DECLARE_STATIC_COUNTER(vle_mmu); 
-    DECLARE_STATIC_COUNTER(vleff_mmu)
-    // DECLARE_STATIC_COUNTER(vle_mmu); 
-    DECLARE_STATIC_COUNTER(vlr_mmu); 
-    // DECLARE_STATIC_COUNTER(vlr_mmu); 
-    // DECLARE_STATIC_COUNTER(vlr_mmu); 
-    // DECLARE_STATIC_COUNTER(vlr_mmu); 
-    DECLARE_STATIC_COUNTER(vlm_mmu); 
-    DECLARE_STATIC_COUNTER(vlxe_mmu);
-    DECLARE_STATIC_COUNTER(vlse_mmu);
-    // DECLARE_STATIC_COUNTER(vlxe_mmu);
-    DECLARE_STATIC_COUNTER(vse_mmu); 
-    DECLARE_STATIC_COUNTER(vsr_mmu); 
-    // DECLARE_STATIC_COUNTER(vsr_mmu); 
-    // DECLARE_STATIC_COUNTER(vsr_mmu); 
-    // DECLARE_STATIC_COUNTER( vsr_mmu);
-    DECLARE_STATIC_COUNTER(vsm_mmu); 
-    DECLARE_STATIC_COUNTER(vsxe_mmu);
-    DECLARE_STATIC_COUNTER(vsse_mmu);
-    // DECLARE_STATIC_COUNTER(vsxe_mmu);
+// // DECLARE_COUNTERS
+    DECLARE_STATIC_COUNTER_EXTERN(vmvxs);
+    DECLARE_STATIC_COUNTER_EXTERN(vpopc);
+    DECLARE_STATIC_COUNTER_EXTERN(vfirst);
+    DECLARE_STATIC_COUNTER_EXTERN(vmvsx);
+    DECLARE_STATIC_COUNTER_EXTERN(vzextvf8);
+    DECLARE_STATIC_COUNTER_EXTERN(vsextvf8);
+    DECLARE_STATIC_COUNTER_EXTERN(vzextvf4);
+    DECLARE_STATIC_COUNTER_EXTERN(vsextvf4);
+    DECLARE_STATIC_COUNTER_EXTERN(vzextvf2);
+    DECLARE_STATIC_COUNTER_EXTERN(vsextvf2);
+    DECLARE_STATIC_COUNTER_EXTERN(vbrev_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vbrev8_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vrev8_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vclz_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vcpop_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vctz_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsbf);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsof);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsif);
+    DECLARE_STATIC_COUNTER_EXTERN(viota);
+    DECLARE_STATIC_COUNTER_EXTERN(vid);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmvfs);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmvsf);
+    DECLARE_STATIC_COUNTER_EXTERN(vfcvt_xufv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfcvt_xfv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfcvt_fxuv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfcvt_fxv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfcvt_rtz_xufv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfcvt_rtz_xfv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_xufv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_xfv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_fxuv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_fxv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_ffv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_rtz_xufv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwcvt_rtz_xfv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_xufw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_xfw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_fxuw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_fxw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_ffw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_rod_ffw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_rtz_xufw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfncvt_rtz_xfw);
+    DECLARE_STATIC_COUNTER_EXTERN(vfsqrt_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vfrsqrt7_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vfrec7_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vfclass_v);
+    DECLARE_STATIC_COUNTER_EXTERN(vadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vrsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vminu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmin);
+    DECLARE_STATIC_COUNTER_EXTERN(vmaxu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmax);
+    DECLARE_STATIC_COUNTER_EXTERN(vand);
+    DECLARE_STATIC_COUNTER_EXTERN(vor);
+    DECLARE_STATIC_COUNTER_EXTERN(vxor);
+    DECLARE_STATIC_COUNTER_EXTERN(vrgather);
+    DECLARE_STATIC_COUNTER_EXTERN(vrgatherei16);
+    DECLARE_STATIC_COUNTER_EXTERN(vadc);
+    DECLARE_STATIC_COUNTER_EXTERN(vmadc);
+    DECLARE_STATIC_COUNTER_EXTERN(vsbc);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsbc);
+    DECLARE_STATIC_COUNTER_EXTERN(vmerge);
+    DECLARE_STATIC_COUNTER_EXTERN(vmseq);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsne);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsltu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmslt);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsleu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsle);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsgtu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmsgt);
+    DECLARE_STATIC_COUNTER_EXTERN(vsaddu);
+    DECLARE_STATIC_COUNTER_EXTERN(vsadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vssubu);
+    DECLARE_STATIC_COUNTER_EXTERN(vssub);
+    DECLARE_STATIC_COUNTER_EXTERN(vsll);
+    DECLARE_STATIC_COUNTER_EXTERN(vmvnr);
+    DECLARE_STATIC_COUNTER_EXTERN(vsmul);
+    DECLARE_STATIC_COUNTER_EXTERN(vsrl);
+    DECLARE_STATIC_COUNTER_EXTERN(vsra);
+    DECLARE_STATIC_COUNTER_EXTERN(vssra);
+    DECLARE_STATIC_COUNTER_EXTERN(vnsrl);
+    DECLARE_STATIC_COUNTER_EXTERN(vnsra);
+    DECLARE_STATIC_COUNTER_EXTERN(vnclipu);
+    DECLARE_STATIC_COUNTER_EXTERN(vnclip);
+    DECLARE_STATIC_COUNTER_EXTERN(vssrl);
+    DECLARE_STATIC_COUNTER_EXTERN(vwredsumu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwredsum);
+    DECLARE_STATIC_COUNTER_EXTERN(vdotu);
+    DECLARE_STATIC_COUNTER_EXTERN(vdot);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsmaccu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsmaccsu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsmaccus);
+    DECLARE_STATIC_COUNTER_EXTERN(vandn);
+    DECLARE_STATIC_COUNTER_EXTERN(vrol);
+    DECLARE_STATIC_COUNTER_EXTERN(vror);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsll);
+    DECLARE_STATIC_COUNTER_EXTERN(vslideup);
+    DECLARE_STATIC_COUNTER_EXTERN(vslidedown);
+    DECLARE_STATIC_COUNTER_EXTERN(vredsum);
+    DECLARE_STATIC_COUNTER_EXTERN(vredand);
+    DECLARE_STATIC_COUNTER_EXTERN(vredor);
+    DECLARE_STATIC_COUNTER_EXTERN(vredxor);
+    DECLARE_STATIC_COUNTER_EXTERN(vredminu);
+    DECLARE_STATIC_COUNTER_EXTERN(vredmin);
+    DECLARE_STATIC_COUNTER_EXTERN(vredmaxu);
+    DECLARE_STATIC_COUNTER_EXTERN(vredmax);
+    DECLARE_STATIC_COUNTER_EXTERN(vaaddu);
+    DECLARE_STATIC_COUNTER_EXTERN(vaadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vasubu);
+    DECLARE_STATIC_COUNTER_EXTERN(vasub);
+    DECLARE_STATIC_COUNTER_EXTERN(vwxunary0_dispatch);
+    DECLARE_STATIC_COUNTER_EXTERN(vmunary0_dispatch);
+    DECLARE_STATIC_COUNTER_EXTERN(vcompress);
+    DECLARE_STATIC_COUNTER_EXTERN(vmandnot);
+    DECLARE_STATIC_COUNTER_EXTERN(vmand);
+    DECLARE_STATIC_COUNTER_EXTERN(vmor);
+    DECLARE_STATIC_COUNTER_EXTERN(vmxor);
+    DECLARE_STATIC_COUNTER_EXTERN(vmornot);
+    DECLARE_STATIC_COUNTER_EXTERN(vmnand);
+    DECLARE_STATIC_COUNTER_EXTERN(vmnor);
+    DECLARE_STATIC_COUNTER_EXTERN(vmxnor);
+    DECLARE_STATIC_COUNTER_EXTERN(vdivu);
+    DECLARE_STATIC_COUNTER_EXTERN(vdiv);
+    DECLARE_STATIC_COUNTER_EXTERN(vremu);
+    DECLARE_STATIC_COUNTER_EXTERN(vrem);
+    DECLARE_STATIC_COUNTER_EXTERN(vmulhu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmul);
+    DECLARE_STATIC_COUNTER_EXTERN(vmulhsu);
+    DECLARE_STATIC_COUNTER_EXTERN(vmulh);
+    DECLARE_STATIC_COUNTER_EXTERN(vmadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vnmsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vnmsac);
+    DECLARE_STATIC_COUNTER_EXTERN(vwaddu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsubu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vwaddu_w);
+    DECLARE_STATIC_COUNTER_EXTERN(vwadd_w);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsubu_w);
+    DECLARE_STATIC_COUNTER_EXTERN(vwsub_w);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmulu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmulsu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmul);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmaccu);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmaccus);
+    DECLARE_STATIC_COUNTER_EXTERN(vwmaccsu);
+    DECLARE_STATIC_COUNTER_EXTERN(vslide1up);
+    DECLARE_STATIC_COUNTER_EXTERN(vslide1down);
+    DECLARE_STATIC_COUNTER_EXTERN(vrxunary0_dispatch);
+    DECLARE_STATIC_COUNTER_EXTERN(vfadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vfredusum);
+    DECLARE_STATIC_COUNTER_EXTERN(vfsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vfredosum);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmin);
+    DECLARE_STATIC_COUNTER_EXTERN(vfredmin);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmax);
+    DECLARE_STATIC_COUNTER_EXTERN(vfredmax);
+    DECLARE_STATIC_COUNTER_EXTERN(vfsgnj);
+    DECLARE_STATIC_COUNTER_EXTERN(vfsgnjn);
+    DECLARE_STATIC_COUNTER_EXTERN(vfsgnjx);
+    DECLARE_STATIC_COUNTER_EXTERN(vwfunary0_dispatch);
+    DECLARE_STATIC_COUNTER_EXTERN(vmfeq);
+    DECLARE_STATIC_COUNTER_EXTERN(vmfle);
+    DECLARE_STATIC_COUNTER_EXTERN(vmflt);
+    DECLARE_STATIC_COUNTER_EXTERN(vmfne);
+    DECLARE_STATIC_COUNTER_EXTERN(vfdiv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmul);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vfnmadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vfnmsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vfnmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmsac);
+    DECLARE_STATIC_COUNTER_EXTERN(vfnmsac);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwadd);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwredusum);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwredosum);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwadd_w);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwsub_w);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwmul);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwnmacc);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwmsac);
+    DECLARE_STATIC_COUNTER_EXTERN(vfwnmsac);
+    DECLARE_STATIC_COUNTER_EXTERN(vfslide1up);
+    DECLARE_STATIC_COUNTER_EXTERN(vfslide1down);
+    DECLARE_STATIC_COUNTER_EXTERN(vrfunary0_dispatch);
+    DECLARE_STATIC_COUNTER_EXTERN(vfmerge);
+    DECLARE_STATIC_COUNTER_EXTERN(vmfgt);
+    DECLARE_STATIC_COUNTER_EXTERN(vmfge);
+    DECLARE_STATIC_COUNTER_EXTERN(vfrdiv);
+    DECLARE_STATIC_COUNTER_EXTERN(vfrsub);
+    DECLARE_STATIC_COUNTER_EXTERN(vsetvli);
+    DECLARE_STATIC_COUNTER_EXTERN(vsetivli);
+    DECLARE_STATIC_COUNTER_EXTERN(vsetvl);
+    DECLARE_STATIC_COUNTER_EXTERN(vopivv);
+    DECLARE_STATIC_COUNTER_EXTERN(vopfvv);
+    DECLARE_STATIC_COUNTER_EXTERN(vopmvv);
+    DECLARE_STATIC_COUNTER_EXTERN(vopivi);
+    DECLARE_STATIC_COUNTER_EXTERN(vopivx);
+    DECLARE_STATIC_COUNTER_EXTERN(vopfvf);
+    DECLARE_STATIC_COUNTER_EXTERN(vopmvx);
+    DECLARE_STATIC_COUNTER_EXTERN(vsetvl_dispatch); 
+
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vle);     
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vleff);   
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlr);   
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlm);     
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlxe);    
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlse);      
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vse);     
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsr);    
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsm);     
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsxe);    
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsse);      
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vle_mmu); 
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vleff_mmu);
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlr_mmu); 
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlm_mmu); 
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlxe_mmu);
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vlse_mmu);
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vse_mmu); 
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsr_mmu); 
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsm_mmu); 
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsxe_mmu);
+    DECLARE_STATIC_COUNTER_LS_EXTERN(vsse_mmu);
 
 
 
 static inline int flush_result(){
+    printf("START FLUSH\n");
+    extern char *main_argv_tqxu;
+    printf("%s\n", main_argv_tqxu);
+    
     FILE *fp = fopen("/nfs/home/xutongqiao/vector/xs-env/NEMU/count.csv", "w");  // "w" 模式会清空原内容
 
     if (fp == NULL) {
@@ -495,28 +514,28 @@ static inline int flush_result(){
         PRINT_COUNT(fp, vopmvx);
         PRINT_COUNT(fp, vsetvl_dispatch);   
            
-        PRINT_COUNT(fp, vle);     
-        PRINT_COUNT(fp, vleff);   
-        PRINT_COUNT(fp, vlr);      
-        PRINT_COUNT(fp, vlm);     
-        PRINT_COUNT(fp, vlxe);    
-        PRINT_COUNT(fp, vlse);     
-        PRINT_COUNT(fp, vse);     
-        PRINT_COUNT(fp, vsr);       
-        PRINT_COUNT(fp, vsm);     
-        PRINT_COUNT(fp, vsxe);    
-        PRINT_COUNT(fp, vsse);      
-        PRINT_COUNT(fp, vle_mmu); 
-        PRINT_COUNT(fp, vleff_mmu)
-        PRINT_COUNT(fp, vlr_mmu); 
-        PRINT_COUNT(fp, vlm_mmu); 
-        PRINT_COUNT(fp, vlxe_mmu);
-        PRINT_COUNT(fp, vlse_mmu);
-        PRINT_COUNT(fp, vse_mmu); 
-        PRINT_COUNT(fp, vsr_mmu); 
-        PRINT_COUNT(fp, vsm_mmu); 
-        PRINT_COUNT(fp, vsxe_mmu);
-        PRINT_COUNT(fp, vsse_mmu);
+        PRINT_LS_COUNT(fp, vle);     
+        PRINT_LS_COUNT(fp, vleff);   
+        PRINT_LS_COUNT(fp, vlr);      
+        PRINT_LS_COUNT(fp, vlm);     
+        PRINT_LS_COUNT(fp, vlxe);    
+        PRINT_LS_COUNT(fp, vlse);     
+        PRINT_LS_COUNT(fp, vse);     
+        PRINT_LS_COUNT(fp, vsr);       
+        PRINT_LS_COUNT(fp, vsm);     
+        PRINT_LS_COUNT(fp, vsxe);    
+        PRINT_LS_COUNT(fp, vsse);      
+        PRINT_LS_COUNT(fp, vle_mmu); 
+        PRINT_LS_COUNT(fp, vleff_mmu);
+        PRINT_LS_COUNT(fp, vlr_mmu); 
+        PRINT_LS_COUNT(fp, vlm_mmu); 
+        PRINT_LS_COUNT(fp, vlxe_mmu);
+        PRINT_LS_COUNT(fp, vlse_mmu);
+        PRINT_LS_COUNT(fp, vse_mmu); 
+        PRINT_LS_COUNT(fp, vsr_mmu); 
+        PRINT_LS_COUNT(fp, vsm_mmu); 
+        PRINT_LS_COUNT(fp, vsxe_mmu);
+        PRINT_LS_COUNT(fp, vsse_mmu);
     fclose(fp);
     return 0;
 }
@@ -734,26 +753,26 @@ static inline int flush_result(){
     COUNTER_FUNC(vopmvx);
     COUNTER_FUNC(vsetvl_dispatch); 
 
-    COUNTER_FUNC(vle);     
-    COUNTER_FUNC(vleff);   
-    COUNTER_FUNC(vlr);      
-    COUNTER_FUNC(vlm);     
-    COUNTER_FUNC(vlxe);    
-    COUNTER_FUNC(vlse);     
-    COUNTER_FUNC(vse);     
-    COUNTER_FUNC(vsr);       
-    COUNTER_FUNC(vsm);     
-    COUNTER_FUNC(vsxe);    
-    COUNTER_FUNC(vsse);      
-    COUNTER_FUNC(vle_mmu); 
-    COUNTER_FUNC(vleff_mmu)
-    COUNTER_FUNC(vlr_mmu); 
-    COUNTER_FUNC(vlm_mmu); 
-    COUNTER_FUNC(vlxe_mmu);
-    COUNTER_FUNC(vlse_mmu);
-    COUNTER_FUNC(vse_mmu); 
-    COUNTER_FUNC(vsr_mmu); 
-    COUNTER_FUNC(vsm_mmu); 
-    COUNTER_FUNC(vsxe_mmu);
-    COUNTER_FUNC(vsse_mmu);
+    COUNTER_LS_FUNC(vle);     
+    COUNTER_LS_FUNC(vleff);   
+    COUNTER_LS_FUNC(vlr);      
+    COUNTER_LS_FUNC(vlm);     
+    COUNTER_LS_FUNC(vlxe);    
+    COUNTER_LS_FUNC(vlse);     
+    COUNTER_LS_FUNC(vse);     
+    COUNTER_LS_FUNC(vsr);       
+    COUNTER_LS_FUNC(vsm);     
+    COUNTER_LS_FUNC(vsxe);    
+    COUNTER_LS_FUNC(vsse);      
+    COUNTER_LS_FUNC(vle_mmu); 
+    COUNTER_LS_FUNC(vleff_mmu)
+    COUNTER_LS_FUNC(vlr_mmu); 
+    COUNTER_LS_FUNC(vlm_mmu); 
+    COUNTER_LS_FUNC(vlxe_mmu);
+    COUNTER_LS_FUNC(vlse_mmu);
+    COUNTER_LS_FUNC(vse_mmu); 
+    COUNTER_LS_FUNC(vsr_mmu); 
+    COUNTER_LS_FUNC(vsm_mmu); 
+    COUNTER_LS_FUNC(vsxe_mmu);
+    COUNTER_LS_FUNC(vsse_mmu);
 #endif

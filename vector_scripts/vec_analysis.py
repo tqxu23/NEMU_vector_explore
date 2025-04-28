@@ -7,9 +7,9 @@ from datetime import datetime
 CHECKPOINT_DIR = "/nfs/home/jiaxiaoyu/checkpoint/spec06_gcc15.x.0_rv64gcbv_base_intFppOff_2025_0307_elf_NEMU_archgroup_2025-03-28-14-26/checkpoint-0-0-0"
 NEMU_PATH = "/nfs/home/xutongqiao/vector/xs-env/NEMU_vector_explore/build/riscv64-nemu-interpreter"
 COUNT_CSV = "/nfs/home/xutongqiao/vector/xs-env/NEMU/count.csv"
-DEST_DIR = "/nfs/home/xutongqiao/vector/xs-env/NEMU/vec_ls_count_results"
-TIMEOUT_LOG = "/nfs/home/xutongqiao/vector/xs-env/NEMU/vec_ls_count_results/timeout.log"
-TIMEOUT_SECONDS = 20
+DEST_DIR = "/nfs/home/xutongqiao/vector/xs-env/NEMU_vector_explore/test04271037"
+TIMEOUT_LOG = "/nfs/home/xutongqiao/vector/xs-env/NEMU_vector_explore/test04271037/timeout.log"
+TIMEOUT_SECONDS = 60
 
 def log_timeout(task_name):
     with open(TIMEOUT_LOG, "a") as log_file:
@@ -70,3 +70,14 @@ for root, _, files in os.walk(CHECKPOINT_DIR):
                 print("错误：count.csv 未找到")
             except Exception as e:
                 print(f"拷贝失败: {e}")
+
+
+            try:
+                os.remove(COUNT_CSV)
+                print(f"文件 '{COUNT_CSV}' 已删除。")
+            except FileNotFoundError:
+                print(f"文件 '{COUNT_CSV}' 不存在。")
+            except PermissionError:
+                print(f"没有权限删除文件 '{COUNT_CSV}'。")
+            except Exception as e:
+                print(f"删除文件时发生错误: {e}")

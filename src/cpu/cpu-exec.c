@@ -19,6 +19,7 @@
 #include <cpu/exec.h>
 #include <cpu/difftest.h>
 #include <cpu/decode.h>
+#include <cpu/count.h>
 #include <memory/host-tlb.h>
 #include <isa-all-instr.h>
 #include <locale.h>
@@ -42,7 +43,8 @@
 #define BATCH_SIZE 1
 #endif
 
-CPU_state cpu = {};
+
+  CPU_state cpu = {};
 
 // Global number of guest instructions
 uint64_t g_nr_guest_instr = 0;
@@ -697,6 +699,7 @@ static void execute(int n) {
       break;
     }
   }
+
   Loge("total insts: %'lu, execute remain: %'d", get_abs_instr_count(), n_remain);
 }
 #endif
@@ -858,7 +861,7 @@ void cpu_exec(uint64_t n) {
 
     Loge("total insts: %'lu, cpu_exec remain: %'li", get_abs_instr_count(), n_remain_total);
   }
-
+  flush_result();
   // At this point, instruction counting has been settled.
   // g_nr_guest_instr is the exact number of instructions.
 

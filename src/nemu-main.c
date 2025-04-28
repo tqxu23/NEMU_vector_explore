@@ -15,11 +15,12 @@
 
 #include <common.h>
 #ifndef CONFIG_SHARE
+char *main_argv_tqxu;
 void init_monitor(int, char *[]);
 void engine_start();
 int is_exit_status_bad();
-
 int main(int argc, char *argv[]) {
+  main_argv_tqxu = argv[1];
   /* Initialize the monitor. */
   init_monitor(argc, argv);
 
